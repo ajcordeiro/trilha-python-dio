@@ -27,7 +27,7 @@ def menu_continuar():
             print("Saindo do sistema...")
             sys.exit()   
         else:
-            print("\n@@@ Opção inválida. Digite 's' para continuar ou 'n' para sair. @@@")
+            print("Opção inválida. Digite 's' para continuar ou 'n' para sair.")
 
 saldo = 0
 limite = 500
