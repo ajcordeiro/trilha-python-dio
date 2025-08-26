@@ -1,8 +1,8 @@
 import textwrap
 import sys
+from datetime import datetime
 
 menu = """\n
-
 ================ MENU =================
 | [d]\tDepositar                     |
 | [s]\tSacar                         |
@@ -12,12 +12,12 @@ menu = """\n
 => """
 
 def menu_continuar():
-    """Exibe menu para decidir se continua no sistema ou sai"""
     while True:
         menu = """\n
-        Deseja realizar novas operações?
-        [s] Sim
-        [n] Não
+        ===== Deseja realizar novas operações? =====
+        | [s]\tSim                                |
+        | [n]\tNão                                |
+        ============================================    
         => """
         escolha = input(textwrap.dedent(menu)).lower()
 
@@ -44,14 +44,14 @@ while True:
 
         if valor > 0:
             saldo += valor
-            print (f"Depósito de R$ {valor:.2f} realizado com sucesso!")
-            extrato += f"Depósito: R$ {valor:.2f}\n"
+            print (f"\nDepósito de R$ {valor:.2f} realizado com sucesso!")
+            extrato += f" Data Depósito: {datetime.now()}\n Valor: R$ {valor:.2f}\n\n"
+           
             menu_continuar()  
             
         else:
             print("Operação falhou! O valor informado é inválido.")
 
-            
     elif opcao == "s":
         valor = float(input("Informe o valor do saque: "))
 
@@ -72,19 +72,22 @@ while True:
 
         elif valor > 0:
             saldo -= valor
-            extrato += f"Saque: R$ {valor:.2f}\n"
+            extrato += f" Data Saque: {datetime.now()} \n Valor: R$ {valor:.2f}\n\n"
+
             numero_saques += 1
-            print(f"Saque de R$ {valor:.2f} realizado com sucesso!")
+            print(f"\nSaque de R$ {valor:.2f} realizado com sucesso!")
             menu_continuar()  
 
         else:
             print("Operação falhou! O valor informado é inválido.")
 
     elif opcao == "e":
-        print("\n================ EXTRATO ================")
-        print("Não foram realizadas movimentações." if not extrato else extrato)
-        print(f"\nSaldo: R$ {saldo:.2f}")
-        print("=========================================")
+       
+
+        print("\n=================== EXTRATO =================== ")
+        print(" Não foram realizadas movimentações." if not extrato else extrato)
+        print(f"\n Saldo Total: R$ {saldo:.2f}")
+        print("===============================================")
 
     elif opcao == "q":
         print("\nSaindo do sistema...")
