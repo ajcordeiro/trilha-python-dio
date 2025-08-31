@@ -1,54 +1,101 @@
-import textwrap
 import sys
 from datetime import datetime
 
-menu = """\n
-================ MENU =================
-| [d]\tDepositar                     |
-| [s]\tSacar                         |
-| [e]\tExtrato                       |
-| [q]\tSair                          |
-=======================================
-=> """
+def desenhar_menu(menu_str: str, titulo, largura_minima=40):
+    """Desenha um menu com moldura, título e largura mínima"""
+    linhas = [linha for linha in menu_str.splitlines() if linha.strip() != ""]
+    largura = max(len(l) for l in linhas)
 
-def menu_continuar():
+    # garante largura mínima
+    largura = max(largura, largura_minima)
+
+    # topo com título centralizado
+    titulo = f" {titulo} "
+    largura_total = largura + 2
+    meio = largura_total - len(titulo)
+    esquerda = meio // 2
+    direita = meio - esquerda
+
+    print("\n╔" + "═" * esquerda + titulo + "═" * direita + "╗")
+
+    for l in linhas:
+        print("║ " + l.ljust(largura) + " ║")
+
+    print("╚" + "═" * (largura + 2) + "╝")
+
+    return input("=> Escolha uma opção: ")
+
+def menu_deseja_continuar():
+
     while True:
-        menu = """\n
-        ===== Deseja realizar novas operações? =====
-        | [s]\tSim                                |
-        | [n]\tNão                                |
-        ============================================    
-        => """
-        escolha = input(textwrap.dedent(menu)).lower()
-
+        escolha = desenhar_menu(menu_continuar, titulo="DESEJA REALIZAR NOVAS OPERAÇÕES?").lower()
         if escolha == "s":
-            return True   
+            return True
         elif escolha == "n":
-            print("Saindo do sistema...")
-            sys.exit()   
+            print("\nSaindo do sistema...")
+            sys.exit()
         else:
-            print("Opção inválida. Digite 's' para continuar ou 'n' para sair.")
+            print("\nOpção inválida. Digite 's' para continuar ou 'n' para sair.")
+
+def desenhar_extrato(extrato_lista, titulo, largura_minima=40):
+
+    linhas = [linha for linha in extrato_lista.splitlines() if linha.strip() != ""]
+    largura = max(len(l) for l in linhas)
+
+    # garante largura mínima
+    largura = max(largura, largura_minima)
+
+    # topo com título centralizado
+    titulo = f" {titulo} "
+    largura_total = largura + 2
+    meio = largura_total - len(titulo)
+    esquerda = meio // 2
+    direita = meio - esquerda
+
+    print("\n╔" + "═" * esquerda + titulo + "═" * direita + "╗")
+
+    for l in linhas:
+        print("║ " + l.ljust(largura) + " ║")
+
+    print("╚" + "═" * (largura + 2) + "╝")
+
+# --- Menu ---
+menu_principal = """ 
+[d] Depositar
+[s] Sacar
+[e] Extrato
+[q] Sair
+"""
+
+menu_continuar = """ 
+[s] Sim
+[n] Não
+"""
+# --- Fim Menu ---
+
+
+# --- Sistema Bancário ---
 
 saldo = 0
 limite = 500
 extrato = ""
 numero_saques = 0
+
 LIMITE_SAQUES = 3
 
 while True:
 
-    opcao = input(menu).lower()
+    opcao = desenhar_menu(menu_principal, titulo=" MENU PRINCIPAL ").lower()
 
     if opcao == "d":
         valor = float(input("Informe o valor do depósito: "))
 
         if valor > 0:
             saldo += valor
-            print (f"\nDepósito de R$ {valor:.2f} realizado com sucesso!")
-            extrato += f" Data Depósito: {datetime.now()}\n Valor: R$ {valor:.2f}\n\n"
-           
-            menu_continuar()  
-            
+            print(f"\nDepósito de R$ {valor:.2f} realizado com sucesso!\n")
+            data_deposito = datetime.now().strftime("%d/%m/%Y %H:%M")
+            extrato += f"\n[{data_deposito}] - Depósito: R$ {valor:.2f}\n"
+            menu_deseja_continuar()
         else:
             print("Operação falhou! O valor informado é inválido.")
 
@@ -56,9 +103,7 @@ while True:
         valor = float(input("Informe o valor do saque: "))
 
         excedeu_saldo = valor > saldo
-
         excedeu_limite = valor > limite
-
         excedeu_saques = numero_saques >= LIMITE_SAQUES
 
         if excedeu_saldo:
@@ -72,23 +117,22 @@ while True:
 
         elif valor > 0:
             saldo -= valor
-            extrato += f" Data Saque: {datetime.now()} \n Valor: R$ {valor:.2f}\n\n"
-
+            data_saque = datetime.now().strftime("%d/%m/%Y %H:%M")
+            extrato += f"\n[{data_saque}] - Saque: R$ {valor:.2f}\n"
             numero_saques += 1
-            print(f"\nSaque de R$ {valor:.2f} realizado com sucesso!")
-            menu_continuar()  
-
+            print(f"\nSaque de R$ {valor:.2f} realizado com sucesso!\n")
+            menu_deseja_continuar()
         else:
             print("Operação falhou! O valor informado é inválido.")
 
     elif opcao == "e":
-       
+        conteudo = extrato if extrato else "Não foram realizadas movimentações.\n"
 
-        print("\n=================== EXTRATO =================== ")
-        print(" Não foram realizadas movimentações." if not extrato else extrato)
-        print(f"\n Saldo Total: R$ {saldo:.2f}")
-        print("===============================================")
+        conteudo += f"\nSaldo: R$ {saldo:.2f}\n"
 
+        desenhar_extrato(conteudo, titulo=" EXTRATO ", largura_minima=60) 
+        menu_deseja_continuar()
+               
     elif opcao == "q":
         print("\nSaindo do sistema...")
         break
