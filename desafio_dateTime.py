@@ -62,17 +62,6 @@ def desenhar_extrato(extrato_lista, titulo, largura_minima=40):
     print("╚" + "═" * (largura + 2) + "╝")
     
 # --- Menu ---
-menu_principal_1 = """ 
-[d]   Depositar
-[s]   Sacar
-[e]   Extrato
-[nc]  Nova conta
-[lc]  Listar contas
-[nu]  Novo usuário
-[q]   Sair
-"""
-
-
 
 menu_principal = """ 
 [d]   Depositar
