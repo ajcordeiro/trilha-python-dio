@@ -37,26 +37,21 @@ def desenhar_menu_principal(menu_str: str, titulo, largura_minima=40):
 
 
 def prosseguir():
-    input("\nPrecione qualquer tecla para prosseguir... ")
+    input("\nPressione enter para prosseguir... ")
     limpar_tela()
     painel_inicial()
 
 
 # --- Menus ---
 menu_principal = """ 
-[nc] Novo Cliente
+[n]  Novo Cliente
 [d]  Depositar 
 [s]  Sacar 
 [e]  Extrato
 [l]  Listar Clientes
 [nc] Nova Conta
 [lc] Listar Contas 
-[s]  Sair
-"""
-
-menu_continuar = """ 
-[s] Sim 
-[n] Não 
+[q]  Sair
 """
 
 
@@ -64,6 +59,7 @@ menu_continuar = """
 class Historico:
     def __init__(self):
         self.transacoes = []
+        self.eventos = []
 
     def adicionar_transacao(self, transacao):
         self.transacoes.append(
@@ -74,6 +70,16 @@ class Historico:
             }
         )
 
+    def adicionar_evento(self, descricao, conta):
+        self.eventos.append(
+            {
+                "descricao": descricao,
+                "data": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+                "conta_numero": conta.numero,
+                "conta_agencia": conta.agencia,
+            }
+        )
+
     def listar_transacoes(self):
         if not self.transacoes:
             print("\n@@@ Nenhuma transação realizada. @@@")
@@ -81,6 +87,17 @@ class Historico:
             print("\n=== Histórico de Transações ===\n")
             for t in self.transacoes:
                 print(f"{t['data']} - {t['tipo']}: R$ {t['valor']:.2f}")
+
+    def listar_eventos(self):
+        if not self.eventos:
+            print("\n@@@ Nenhum evento registrado. @@@")
+        else:
+            print("\n=== Histórico de Eventos ===\n")
+            for e in self.eventos:
+                print(
+                    f"Agencia: {e['conta_agencia']}\tConta: {e['conta_numero']} - "
+                    f"{e['data']}\t{e['descricao']}"
+                )
 
 
 class Cliente:
@@ -112,16 +129,17 @@ class Transacao(ABC):
 
 
 class Conta:
-    def __init__(self, numero, cliente):
+    def __init__(self, numero, cliente, data_criacao):
         self._saldo = 0
         self._numero = numero
         self._agencia = "0001"
         self._cliente = cliente
+        self._data_criacao = data_criacao
         self._historico = Historico()
 
     @classmethod
-    def nova_conta(cls, cliente, numero):
-        return cls(numero, cliente)
+    def nova_conta(cls, cliente, numero, data_criacao):
+        return cls(numero, cliente, data_criacao)
 
     @property
     def saldo(self):
@@ -143,10 +161,15 @@ class Conta:
     def historico(self):
         return self._historico
 
+    @property
+    def data_criacao(self):
+        return self._data_criacao
+
     def depositar(self, valor):
         if valor > 0:
             self._saldo += valor
-            print(f"\n=== Depósito de R$ {valor:.2f} realizado com sucesso! ===\n")
+            print(
+                f"\n=== Depósito de R$ {valor:.2f} realizado com sucesso! ===\n")
             return True
         else:
             print("\n@@@ Valor inválido para depósito! @@@")
@@ -154,8 +177,8 @@ class Conta:
 
 
 class ContaCorrente(Conta):
-    def __init__(self, numero, cliente, limite=500, limite_saques=3):
-        super().__init__(numero, cliente)
+    def __init__(self, numero, cliente, data_criacao, limite=500, limite_saques=3):
+        super().__init__(numero, cliente, data_criacao)
         self.limite = limite
         self.limite_saques = limite_saques
 
@@ -173,33 +196,32 @@ class Deposito(Transacao):
             conta.historico.adicionar_transacao(self)
 
 
-# --- Funções de negócio ---
+# --- Funções de negócio cliente ---
 def listar_todos_os_clientes(clientes):
     if not clientes:
-        print("\n@@@ Nenhum cliente cadastrado! @@@")
+        print("\n@@@ Nenhum cliente cadastrado. @@@")
         return
 
     print("\n=== Lista de Clientes ===")
     for cliente in clientes:
-        print(f"\n Nome: {cliente.nome}")
-        print(f" CPF: {cliente.cpf}")
-        print(f" Endereço: {cliente.endereco}")
-        print(f" Nascimento: {cliente.data_nascimento}")
-
-        if cliente.contas:
-            print("\n Contas:")
-            for conta in cliente.contas:
-                print(
-                    f" Agência: {conta.agencia} | Número: {conta.numero} | Saldo: R$ {conta.saldo:.2f}\n"
-                )
+        print(f"\nCliente: {cliente.nome} \t CPF: {cliente.cpf}")
+        if not cliente.contas:
+            print("Nenhuma conta vinculada.")
         else:
-            print("Nenhuma conta cadastrada.")
+            for conta in cliente.contas:
+                print("\nContas:")
+                print(
+                    f" Criada em: {conta.data_criacao}"
+                    f"\n Agência: {conta.agencia} \t Conta: {conta.numero}"
+                    f"\n Saldo: R$ {conta.saldo:.2f}"
+                )
+                conta.historico.listar_eventos()
 
     prosseguir()
 
 
 def listar_cliente_por_cpf(clientes):
-    cpf = input("Informe o CPF do cliente: ")
+    cpf = input("Informe o CPF do cliente:")
     cliente = filtrar_cliente(cpf, clientes)
 
     if not cliente:
@@ -207,23 +229,29 @@ def listar_cliente_por_cpf(clientes):
         return  # volta pro menu inicial
 
     print("\n=== Dados do Cliente ===")
-    print(f" Nome: {cliente.nome}")
-    print(f" CPF: {cliente.cpf}")
-    print(f" Endereço: {cliente.endereco}")
-    print(f" Nascimento: {cliente.data_nascimento}")
+    print(
+        f"\n Nome: {cliente.nome} \t CPF: {cliente.cpf}"
+        f"\n Endereço: {cliente.endereco}"
+        f"\n Nascimento: {cliente.data_nascimento}"
+    )
 
     if cliente.contas:
-        print("\n Contas:")
         for conta in cliente.contas:
+            print("\nContas:")
             print(
-                f" Agência: {conta.agencia} | Número: {conta.numero} | Saldo: R$ {conta.saldo:.2f}"
+                f" Criada em: {conta.data_criacao}"
+                f"\n Agência: {conta.agencia} \tConta: {conta.numero}"
+                f"\n Saldo: R$ {conta.saldo:.2f}"
             )
     else:
-        print(" Nenhuma conta cadastrada.")
+        print("Nenhuma conta cadastrada.")
+
+    prosseguir()
 
 
 def filtrar_cliente(cpf, clientes):
-    clientes_filtrados = [cliente for cliente in clientes if cliente.cpf == cpf]
+    clientes_filtrados = [
+        cliente for cliente in clientes if cliente.cpf == cpf]
     return clientes_filtrados[0] if clientes_filtrados else None
 
 
@@ -248,17 +276,39 @@ def criar_cliente(clientes):
     prosseguir()
 
 
+# --- Funções de negócio conta ---
 def criar_conta(cliente, contas):
     numero_conta = len(contas) + 1
-    conta = ContaCorrente.nova_conta(cliente, numero_conta)
+    data_criacao = datetime.now().strftime("%d-%m-%Y %H:%M")
+    conta = ContaCorrente.nova_conta(cliente, numero_conta, data_criacao)
     contas.append(conta)
     cliente.adicionar_conta(conta)
+    conta.historico.adicionar_evento("Conta criada", conta)
 
-    print(f"\n=== CLIENTE E CONTA CRIADO COM SUCESSO ===")
-    print(f"\nCliente: {cliente.nome}")
-    print(f"Conta Número: {numero_conta}")
-    print(f"Agência: {conta.agencia}")
+    print(f"\n=== CLIENTE E CONTA CRIADO COM SUCESSO ==="
+          f"\n Registro criado em {conta.data_criacao}\n"
+          f"\n Cliente: {cliente.nome} \t CPF: {cliente.cpf}\n"
+          f"\n ================= CONTA ================="
+          f"\n Conta Número: {numero_conta} \tAgência: {conta.agencia}"
+          )
 
+    prosseguir()
+
+
+def listar_contas(contas):
+    if not contas:
+        print("\n@@@ Nenhuma conta cadastrada! @@@")
+        return
+
+    print("\n=== Lista de Contas ===")
+    for conta in contas:
+        print(
+            f"\nCriada em: {conta.data_criacao}"
+            f"\nTitular: {conta.cliente.nome}"
+            f"\nAgência: {conta.agencia} \tConta: {conta.numero}"
+            f"\nSaldo: R$ {conta.saldo:.2f}")
+
+    # conta.historico.listar_eventos()
     prosseguir()
 
 
@@ -269,6 +319,7 @@ def recuperar_conta_cliente(cliente):
     return cliente.contas[0]  # por enquanto, pega a primeira conta
 
 
+# --- Funções de negócio transação ---
 def depositar(clientes):
     cpf = input("Informe o CPF do cliente: ")
     cliente = filtrar_cliente(cpf, clientes)
@@ -312,7 +363,7 @@ def main():
             menu_principal, titulo=" MENU PRINCIPAL "
         ).lower()
 
-        if opcao == "nc":
+        if opcao == "n":
             cliente = criar_cliente(clientes)
             if cliente:
                 criar_conta(cliente, contas)
@@ -321,11 +372,16 @@ def main():
             clientes_opcao = input(
                 "Deseja listar todos os clientes ou buscar por CPF? [todos/cpf]: "
             ).lower()
+
+            if clientes_opcao not in ("todos", "cpf"):
+                print("\n@@@ Opção inválida! @@@")
+                prosseguir()
+                continue
+
             if clientes_opcao == "todos":
                 listar_todos_os_clientes(clientes)
-            else:
+            elif clientes_opcao == "cpf":
                 listar_cliente_por_cpf(clientes)
-            # continue
 
         elif opcao == "d":
             depositar(clientes)
@@ -333,12 +389,16 @@ def main():
         elif opcao == "e":
             extrato(clientes)
 
-        elif opcao == "s":
+        elif opcao == "lc":
+            listar_contas(contas)
+
+        elif opcao == "q":
             print("\nSaindo do sistema...")
             sys.exit()
 
         else:
             print("\n@@@ Opção inválida! @@@")
+            prosseguir()
 
 
 if __name__ == "__main__":
